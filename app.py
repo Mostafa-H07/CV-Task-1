@@ -17,7 +17,8 @@ cpp.run_pipeline.argtypes = [
     ctypes.POINTER(ctypes.c_uint8), ctypes.c_int, ctypes.c_int, # Input
     ctypes.c_int, ctypes.c_float, ctypes.c_float,               # Noise
     ctypes.c_int, ctypes.c_int, ctypes.c_int,                   # Filter
-    ctypes.POINTER(ctypes.c_uint8), ctypes.POINTER(ctypes.c_uint8) # Output
+    ctypes.POINTER(ctypes.c_uint8), ctypes.POINTER(ctypes.c_uint8),
+    ctypes.POINTER(ctypes.c_uint8)                              # Outputs
 ]
 
 st.set_page_config(layout="wide", page_title="CV Studio")
@@ -49,8 +50,9 @@ if uploaded_file is not None:
     og_img = cv.imdecode(file_bytes, cv.IMREAD_GRAYSCALE)
 
     # 2. Allocate memory for C++ to write into
+    noisy_img = np.zeros_like(og_img)
     out_img = np.zeros_like(og_img)
-    out_hist = np.zeros((400, 512, 3), dtype=np.uint8) # 512x400 Canvas
+    out_hist = np.zeros((480, 640, 3), dtype=np.uint8)
 
     # 3. Execute Native C++ OOP Pipeline
     n_idx = ["None", "Uniform", "Gaussian", "Salt & Pepper"].index(noise_type)
@@ -59,6 +61,7 @@ if uploaded_file is not None:
         og_img.ctypes.data_as(ctypes.POINTER(ctypes.c_uint8)), og_img.shape[0], og_img.shape[1],
         n_idx, float(np1), float(np2),
         filter_dict[filter_choice], k_size, direction,
+        noisy_img.ctypes.data_as(ctypes.POINTER(ctypes.c_uint8)),
         out_img.ctypes.data_as(ctypes.POINTER(ctypes.c_uint8)),
         out_hist.ctypes.data_as(ctypes.POINTER(ctypes.c_uint8))
     )
@@ -67,9 +70,15 @@ if uploaded_file is not None:
     c1, c2 = st.columns(2)
     with c1:
         st.subheader("Original Image")
-        st.image(og_img, use_container_width=True)
-        st.subheader("Resulting Image")
-        st.image(out_img, use_container_width=True)
+        st.image(og_img, width="stretch")
     with c2:
-        st.subheader("C++ Rendered Histogram & PDF")
-        st.image(out_hist, use_container_width=True)
+        st.subheader("Noisy Image")
+        st.image(noisy_img, width="stretch")
+
+    c3, c4 = st.columns(2)
+    with c3:
+        st.subheader("Filtered Result")
+        st.image(out_img, width="stretch")
+    with c4:
+        st.subheader("Histogram & PDF")
+        st.image(out_hist, width="stretch")

@@ -159,25 +159,59 @@ public:
             }
         }
 
-        // Draw onto 512x400 canvas (3 channels for color)
-        Mat canvas(400, 512, CV_8UC3, Scalar(255, 255, 255));
-        int bin_w = 2;
-        Point prevPoint(0, 400);
+        // Leave room for axes and labels around the plotted histogram.
+        const int canvasWidth = 640;
+        const int canvasHeight = 480;
+        const int plotLeft = 64;
+        const int plotTop = 24;
+        const int plotRight = 616;
+        const int plotBottom = 424;
+        const int plotWidth = plotRight - plotLeft;
+        const int plotHeight = plotBottom - plotTop;
+        Mat canvas(canvasHeight, canvasWidth, CV_8UC3, Scalar(255, 255, 255));
+        int bin_w = plotWidth / 256;
+        Point prevPoint(plotLeft, plotBottom);
+
+        line(canvas, Point(plotLeft, plotTop), Point(plotLeft, plotBottom), Scalar(30, 30, 30), 2);
+        line(canvas, Point(plotLeft, plotBottom), Point(plotRight, plotBottom), Scalar(30, 30, 30), 2);
+        putText(canvas, "Intensity", Point(plotRight - 64, plotBottom + 38),
+            FONT_HERSHEY_SIMPLEX, 0.55, Scalar(30, 30, 30), 1, LINE_AA);
+        putText(canvas, "Pixel count", Point(8, plotTop - 6),
+            FONT_HERSHEY_SIMPLEX, 0.5, Scalar(30, 30, 30), 1, LINE_AA);
+
+        const int xTicks[] = {0, 64, 128, 192, 255};
+        for (int value : xTicks) {
+            int x = plotLeft + cvRound((double)value / 255.0 * plotWidth);
+            line(canvas, Point(x, plotBottom), Point(x, plotBottom + 7), Scalar(30, 30, 30), 1);
+            putText(canvas, to_string(value), Point(x - 10, plotBottom + 25),
+                FONT_HERSHEY_SIMPLEX, 0.45, Scalar(30, 30, 30), 1, LINE_AA);
+        }
+
+        const int yTickCount = 4;
+        for (int tick = 0; tick <= yTickCount; ++tick) {
+            int value = (maxCount * tick) / yTickCount;
+            int y = plotBottom - cvRound((double)tick / yTickCount * plotHeight);
+            line(canvas, Point(plotLeft - 5, y), Point(plotLeft, y), Scalar(30, 30, 30), 1);
+            putText(canvas, to_string(value), Point(10, y + 5),
+                FONT_HERSHEY_SIMPLEX, 0.45, Scalar(30, 30, 30), 1, LINE_AA);
+        }
 
         for (int i = 0; i < 256; i++) {
-            int barHeight = cvRound(((double)hist[i] / maxCount) * 400);
-            rectangle(canvas, Point(i * bin_w, 400), Point((i + 1) * bin_w, 400 - barHeight), Scalar(200, 200, 200), FILLED);
+            int x1 = plotLeft + i * bin_w;
+            int x2 = (i == 255) ? plotRight : x1 + bin_w;
+            int barHeight = maxCount == 0 ? 0 : cvRound(((double)hist[i] / maxCount) * plotHeight);
+            rectangle(canvas, Point(x1, plotBottom), Point(x2, plotBottom - barHeight), Scalar(200, 200, 200), FILLED);
 
             double pdf = (double)hist[i] / total;
-            int pdfHeight = cvRound((pdf * total / maxCount) * 400); 
-            Point currentPoint(i * bin_w + 1, 400 - pdfHeight);
+            int pdfHeight = maxCount == 0 ? 0 : cvRound((pdf * total / maxCount) * plotHeight);
+            Point currentPoint(plotLeft + i * bin_w + (bin_w / 2), plotBottom - pdfHeight);
             
             if (i > 0) line(canvas, prevPoint, currentPoint, Scalar(255, 0, 0), 2, LINE_AA);
             prevPoint = currentPoint;
         }
 
         // Copy canvas directly to Python's memory pointer
-        memcpy(out_hist_data, canvas.data, 512 * 400 * 3);
+        memcpy(out_hist_data, canvas.data, canvasWidth * canvasHeight * 3);
     }
 
     void copyImageTo(uchar* out_data) {
@@ -190,7 +224,8 @@ extern "C" {
     void run_pipeline(unsigned char* in_data, int rows, int cols,
                       int noise_type, float np1, float np2,
                       int filter_type, int k_size, int dir,
-                      unsigned char* out_img, unsigned char* out_hist) {
+                      unsigned char* out_noisy, unsigned char* out_img,
+                      unsigned char* out_hist) {
         
         // 1. Initialize OOP Object
         ImageProcessor proc(in_data, rows, cols);
@@ -199,6 +234,8 @@ extern "C" {
         if (noise_type == 1) proc.addUniformNoise((int)np1, (int)np2);
         if (noise_type == 2) proc.addGaussianNoise(np1, np2);
         if (noise_type == 3) proc.addSaltAndPepper(np1, np2);
+
+        proc.copyImageTo(out_noisy);
 
         // 3. Apply Filters & Edge Detection
         if (filter_type == 3) {
