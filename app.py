@@ -38,7 +38,7 @@ with st.sidebar:
         np1 = st.slider("Ratio (Pepper/Salt)", 0.1, 5.0, 1.0)
         np2 = st.slider("Density", 0.0, 0.5, 0.05)
 
-    filter_dict = {"None":0, "Average":1, "Gaussian":2, "Median":3, "Sobel":4, "Prewitt":5, "Roberts":6, "Canny (OpenCV)":7}
+    filter_dict = {"None":0, "Average":1, "Gaussian":2, "Median":3, "Sobel":4, "Prewitt":5, "Roberts":6, "Canny (OpenCV)":7, "Equalize":8, "Normalize":9}
     filter_choice = st.selectbox("Filter/Edges", list(filter_dict.keys()))
     
     direction = 0 if st.radio("Direction", ["X", "Y"], horizontal=True) == "X" else 1
@@ -82,3 +82,46 @@ if uploaded_file is not None:
     with c4:
         st.subheader("Histogram & PDF")
         st.image(out_hist, width="stretch")
+
+    # --- Task 8: Color -> Gray, R/G/B histograms + CDF, equalization via gray CDF ---
+    import matplotlib.pyplot as plt
+
+    st.divider()
+    st.header("Color to Gray, RGB Histograms and CDF")
+
+    bgr = cv.imdecode(file_bytes, cv.IMREAD_COLOR)
+    rgb = cv.cvtColor(bgr, cv.COLOR_BGR2RGB)
+    R, G, B = rgb[..., 0], rgb[..., 1], rgb[..., 2]
+    gray = np.round(0.299 * R + 0.587 * G + 0.114 * B).astype(np.uint8)
+
+    channels = [("R", R, "red"), ("G", G, "green"), ("B", B, "blue"), ("Gray", gray, "gray")]
+    fig, axes = plt.subplots(1, 4, figsize=(20, 4))
+    cdfs = {}
+    for ax, (name, ch, col) in zip(axes, channels):
+        h = np.bincount(ch.ravel(), minlength=256)
+        pdf = h / h.sum()
+        cdf = np.cumsum(pdf)
+        cdfs[name] = cdf
+        ax.bar(np.arange(256), pdf, color=col, width=1.0)
+        ax.set_title(f"{name} histogram (PDF) + CDF")
+        ax.set_xlabel("Intensity")
+        ax.set_ylabel("PDF")
+        ax2 = ax.twinx()
+        ax2.plot(cdf, color="black")
+        ax2.set_ylim(0, 1.05)
+        ax2.set_ylabel("CDF")
+    fig.tight_layout()
+    st.pyplot(fig)
+    plt.close(fig)
+
+    eq_gray = np.round(255 * cdfs["Gray"]).astype(np.uint8)[gray]
+    g1, g2, g3 = st.columns(3)
+    with g1:
+        st.subheader("Color Image")
+        st.image(rgb, width="stretch")
+    with g2:
+        st.subheader("Grayscale")
+        st.image(gray, width="stretch")
+    with g3:
+        st.subheader("Equalized (gray CDF mapping)")
+        st.image(eq_gray, width="stretch")

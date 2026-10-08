@@ -138,6 +138,34 @@ public:
         img = output;
     }
 
+    // Histogram equalization: new = round(255 * CDF[old])
+    void applyEqualize() {
+        int hist[256] = {0};
+        for (int y = 0; y < img.rows; y++)
+            for (int x = 0; x < img.cols; x++)
+                hist[img.at<uchar>(y, x)]++;
+
+        double total = (double)img.rows * img.cols;
+        double cdf = 0.0;
+        uchar lut[256];
+        for (int i = 0; i < 256; i++) {
+            cdf += hist[i] / total;
+            lut[i] = saturate_cast<uchar>(cvRound(255.0 * cdf));
+        }
+        for (int y = 0; y < img.rows; y++)
+            for (int x = 0; x < img.cols; x++)
+                img.at<uchar>(y, x) = lut[img.at<uchar>(y, x)];
+    }
+
+    // Normalization: linear stretch to [0, 255]
+    void applyNormalize() {
+        double mn, mx;
+        minMaxLoc(img, &mn, &mx);
+        if (mx == mn) return;
+        double scale = 255.0 / (mx - mn);
+        img.convertTo(img, CV_8U, scale, -mn * scale);
+    }
+
     void applyCanny() {
         Mat edges;
         Canny(img, edges, 100, 200); // Per task 1, OpenCV is explicitly used here
@@ -242,6 +270,10 @@ extern "C" {
             proc.applyMedian(k_size);
         } else if (filter_type == 7) {
             proc.applyCanny();
+        } else if (filter_type == 8) {
+            proc.applyEqualize();
+        } else if (filter_type == 9) {
+            proc.applyNormalize();
         } else if (filter_type > 0) {
             Mat k = proc.generateKernel(filter_type, k_size, dir);
             proc.applyConvolution(k);
