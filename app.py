@@ -3,6 +3,7 @@ import cv2 as cv
 import numpy as np
 import ctypes
 import os
+import matplotlib.pyplot as plt
 
 # --- Link C++ Engine ---
 base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -17,8 +18,9 @@ cpp.run_pipeline.argtypes = [
     ctypes.POINTER(ctypes.c_uint8), ctypes.c_int, ctypes.c_int, # Input
     ctypes.c_int, ctypes.c_float, ctypes.c_float,               # Noise
     ctypes.c_int, ctypes.c_int, ctypes.c_int,                   # Filter
+    ctypes.c_float, ctypes.c_float,                              # Gaussian kernel mean/stddev
     ctypes.POINTER(ctypes.c_uint8), ctypes.POINTER(ctypes.c_uint8),
-    ctypes.POINTER(ctypes.c_uint8)                              # Outputs
+    ctypes.POINTER(ctypes.c_int32)                               # Histogram bins
 ]
 
 st.set_page_config(layout="wide", page_title="CV Studio")
@@ -35,11 +37,16 @@ with st.sidebar:
         np1 = st.slider("Mean", -50.0, 50.0, 0.0)
         np2 = st.slider("Std Dev", 1.0, 100.0, 25.0)
     elif noise_type == "Salt & Pepper":
-        np1 = st.slider("Ratio (Pepper/Salt)", 0.1, 5.0, 1.0)
-        np2 = st.slider("Density", 0.0, 0.5, 0.05)
+        np1 = st.slider("Ratio (Pepper/Salt)", 0.0, 9999.0, 1.0, 1.0)
+        np2 = st.slider("Density", 0.0, 1.0, 0.05, 0.01)
 
     filter_dict = {"None":0, "Average":1, "Gaussian":2, "Median":3, "Sobel":4, "Prewitt":5, "Roberts":6, "Canny (OpenCV)":7, "Equalize":8, "Normalize":9}
     filter_choice = st.selectbox("Filter/Edges", list(filter_dict.keys()))
+
+    filter_mean, filter_stddev = 0.0, 1.0
+    if filter_choice == "Gaussian":
+        filter_mean = st.slider("Gaussian kernel mean", -3.0, 3.0, 0.0, 0.1)
+        filter_stddev = st.slider("Gaussian kernel std dev", 0.1, 5.0, 1.0, 0.1)
     
     direction = 0 if st.radio("Direction", ["X", "Y"], horizontal=True) == "X" else 1
     k_size = st.select_slider("Kernel Size", options=[3, 5, 7], value=3)
@@ -52,7 +59,7 @@ if uploaded_file is not None:
     # 2. Allocate memory for C++ to write into
     noisy_img = np.zeros_like(og_img)
     out_img = np.zeros_like(og_img)
-    out_hist = np.zeros((480, 640, 3), dtype=np.uint8)
+    out_hist = np.zeros(256, dtype=np.int32)
 
     # 3. Execute Native C++ OOP Pipeline
     n_idx = ["None", "Uniform", "Gaussian", "Salt & Pepper"].index(noise_type)
@@ -61,9 +68,10 @@ if uploaded_file is not None:
         og_img.ctypes.data_as(ctypes.POINTER(ctypes.c_uint8)), og_img.shape[0], og_img.shape[1],
         n_idx, float(np1), float(np2),
         filter_dict[filter_choice], k_size, direction,
+        float(filter_mean), float(filter_stddev),
         noisy_img.ctypes.data_as(ctypes.POINTER(ctypes.c_uint8)),
         out_img.ctypes.data_as(ctypes.POINTER(ctypes.c_uint8)),
-        out_hist.ctypes.data_as(ctypes.POINTER(ctypes.c_uint8))
+        out_hist.ctypes.data_as(ctypes.POINTER(ctypes.c_int32))
     )
 
     # 4. Render
@@ -81,11 +89,21 @@ if uploaded_file is not None:
         st.image(out_img, width="stretch")
     with c4:
         st.subheader("Histogram & PDF")
-        st.image(out_hist, width="stretch")
+        intensity = np.arange(256)
+        pdf = out_hist / out_hist.sum() if out_hist.sum() else out_hist.astype(float)
+        fig, ax = plt.subplots(figsize=(8, 4))
+        ax.bar(intensity, out_hist, width=1.0, color="black", alpha=0.75)
+        ax.set_xlabel("Pixel intensity")
+        ax.set_ylabel("Pixel count")
+        ax.set_xlim(0, 255)
+        ax2 = ax.twinx()
+        ax2.plot(intensity, pdf, color="tab:blue")
+        ax2.set_ylabel("Probability")
+        fig.tight_layout()
+        st.pyplot(fig)
+        plt.close(fig)
 
     # --- Task 8: Color -> Gray, R/G/B histograms + CDF, equalization via gray CDF ---
-    import matplotlib.pyplot as plt
-
     st.divider()
     st.header("Color to Gray, RGB Histograms and CDF")
 

@@ -8,6 +8,7 @@ This project provides a Streamlit interface backed by a C++ image-processing eng
 - Filters: Average, Gaussian, Median
 - Edge detection: Sobel, Prewitt, Roberts, Canny (OpenCV)
 - Histogram equalization (CDF mapping): `new = round(255 * CDF[old])`
+- The native engine returns 256 raw histogram counts; Python renders the histogram and PDF
 - Normalization (linear stretch to 0-255): `new = (old - min) / (max - min) * 255`
 - Color to grayscale (`0.299 R + 0.587 G + 0.114 B`), with R, G, B and gray histograms (PDF) and CDF curves, plus equalization using the gray CDF
 
@@ -63,6 +64,9 @@ g++ -O3 -shared -o engine.dll engine.cpp -IC:\msys64\mingw64\include\opencv5 -LC
 ```
 
 If the compiler cannot find the OpenCV headers, check whether they are in `include\opencv4` instead of `include\opencv5` and adjust the `-I` path.
+
+The manually implemented convolution and median filters use explicit zero padding. The Gaussian
+filter exposes its kernel mean and standard deviation in the Streamlit sidebar.
 
 If MSYS2 uses a different location, replace the `C:\msys64` paths with the matching paths.
 
