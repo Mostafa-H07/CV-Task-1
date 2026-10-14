@@ -1,4 +1,4 @@
-[# C++ Computer Vision Engine
+# C++ Computer Vision Engine
 
 This project provides a Streamlit interface backed by a C++ image-processing engine. Python handles the interface and image upload; `engine.cpp` is compiled into `engine.dll` and called through `ctypes`.
 
