@@ -1,0 +1,10 @@
+^E:\ABDOO\3RD YEAR - 1ST TERM\CV\TASKS\CV-TASK-1\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" "-SE:/abdoo/3rd year - 1st term/CV/Tasks/CV-Task-1" "-BE:/abdoo/3rd year - 1st term/CV/Tasks/CV-Task-1/build" --check-stamp-file "E:/abdoo/3rd year - 1st term/CV/Tasks/CV-Task-1/build/CMakeFiles/generate.stamp"
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

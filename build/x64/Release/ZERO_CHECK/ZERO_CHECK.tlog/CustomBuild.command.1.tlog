@@ -1,0 +1,10 @@
+^E:\ABDOO\3RD YEAR - 1ST TERM\CV\TASKS\CV-TASK-1\BUILD\CMAKEFILES\77E5FA5DB9DCD14DCF9790A0D3474159\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" "-SE:/abdoo/3rd year - 1st term/CV/Tasks/CV-Task-1" "-BE:/abdoo/3rd year - 1st term/CV/Tasks/CV-Task-1/build" --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file "E:/abdoo/3rd year - 1st term/CV/Tasks/CV-Task-1/build/engine.slnx"
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
