@@ -4,7 +4,7 @@ An image-processing application built for the Computer Vision course (Task 1). I
 
 **All image processing runs in C++** (`engine.cpp`, compiled to `engine.dll`). Python is only the front end: it uploads and decodes the image, calls the engine through `ctypes`, and displays the results and plots.
 
-![Application overview](docs/screenshots/ui-overview.png)
+![Application overview](docs/screenshots/Application-overview.png)
 <!-- 📸 ui-overview.png: the whole app with an image loaded, showing the tab bar and the sidebar. -->
 
 *The application: one tab per group of related features, and a sidebar with the image upload.*
