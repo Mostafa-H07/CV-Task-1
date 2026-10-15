@@ -189,6 +189,11 @@ For Sobel, Prewitt and Roberts the **X and Y results are shown side by side**. X
 
 *Equalization of the gray image using its CDF, and the resulting histogram.*
 
+![RGB histograms](docs/screenshots/color-rgb-histograms.png)
+<!-- 📸 color-rgb-histograms.png: color image, grayscale image and the R/G/B/Gray plots. -->
+
+*Color image, grayscale image, and the R, G, B and gray histograms with their CDFs.*
+
 **Observations**
 
 - Equalization spreads the gray levels over the full range, so a low-contrast image gets a much better contrast and its CDF gets close to the straight line.
