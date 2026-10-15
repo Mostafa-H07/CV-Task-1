@@ -77,14 +77,15 @@ Every histogram in the application is drawn as a PDF (top) and its CDF (bottom) 
 ![Uniform noise](docs/screenshots/noise-uniform.png)
 <!-- 📸 noise-uniform.png: Uniform noise selected, filter = None. -->
 
-*Uniform noise (filter = None): the noisy image and its histogram.*
+*Uniform noise (filter = None): the noisy image.*
 
 ![Gaussian noise](docs/screenshots/noise-gaussian.png)
 <!-- 📸 noise-gaussian.png: Gaussian noise selected, filter = None. -->
 
-*Gaussian noise (filter = None): the noisy image and its histogram.*
+*Gaussian noise (filter = None): the noisy image.*
 
 ![Salt and pepper noise](docs/screenshots/noise-salt-pepper.png)
+![Salt and pepper noise histogram](docs/screenshots/noise-salt-pepper-histogram.png)
 <!-- 📸 noise-salt-pepper.png: Salt & Pepper noise selected, filter = None. -->
 
 *Salt & Pepper noise (filter = None): note the spikes at 0 and 255 in the histogram.*
@@ -183,20 +184,10 @@ For Sobel, Prewitt and Roberts the **X and Y results are shown side by side**. X
 
 *CDF comparison of the original, equalized and normalized images.*
 
-![RGB histograms](docs/screenshots/color-rgb-histograms.png)
-<!-- 📸 color-rgb-histograms.png: color image, grayscale image and the R/G/B/Gray plots. -->
-
-*Color image, grayscale image, and the R, G, B and gray histograms with their CDFs.*
-
 ![Gray equalization](docs/screenshots/color-gray-equalization.png)
 <!-- 📸 color-gray-equalization.png: equalized gray image and its histogram. -->
 
 *Equalization of the gray image using its CDF, and the resulting histogram.*
-
-![Log scale](docs/screenshots/graph-log-scale.png)
-<!-- 📸 graph-log-scale.png: a histogram with "Log scale for histograms" enabled (sidebar), ideally with Salt & Pepper noise. -->
-
-*A histogram with the log scale enabled.*
 
 **Observations**
 
@@ -255,11 +246,6 @@ The low-pass filter uses `H` and the high-pass filter uses `1 - H`. The image is
 <!-- 📸 hybrid-swapped.png: same pair with "Swap roles" enabled. -->
 
 *The same pair of images with the roles swapped.*
-
-![Hybrid thumbnail](docs/screenshots/hybrid-thumbnail.png)
-<!-- 📸 hybrid-thumbnail.png: the 4x downscaled preview. -->
-
-*The 4x downscaled preview: the low-frequency image dominates.*
 
 **Observations**
 
